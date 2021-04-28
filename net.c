@@ -39,6 +39,8 @@ static bool send_packet(int sd, uint32_t op, uint8_t *block) {
 /* attempts to connect to server and set the global cli_sd variable to the
  * socket; returns true if successful and false if not. */
 bool jbod_connect(const char *ip, uint16_t port) {
+  //Create socket
+  //convert ip to binary form
 }
 
 /* disconnects from the server and resets cli_sd */
