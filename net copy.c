@@ -12,12 +12,12 @@
 #include "jbod.h"
 
 /* the client socket descriptor for the connection to the server */
-int cli_sd = -1;
+int fd = -1;
 
 /* attempts to read n bytes from fd; returns true on success and false on
  * failure */
 static bool nread(int fd, int len, uint8_t *buf) {
-  if (recv(cli_sd, buf, len, 0) < 0) {
+  if (recv(fd, buf, len, 0) < 0) {
 
 		return false;
 	}
@@ -51,8 +51,8 @@ bool jbod_connect(const char *ip, uint16_t port) {
   struct sockaddr_in server;
   fprintf(stderr, "connected to the JBOD server at 127.0.0.1\n");
 
-  cli_sd = socket(AF_INET, SOCK_STREAM, 0);
-	if (-1 == cli_sd) {
+  fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (-1 == fd) {
 
     return -1;
 	}
@@ -61,7 +61,7 @@ bool jbod_connect(const char *ip, uint16_t port) {
 	server.sin_family = AF_INET;
 	server.sin_port = htons(3333);
 
-	if (connect(cli_sd, (struct sockaddr *)&server, sizeof(server)) < 0) {
+	if (connect(fd, (struct sockaddr *)&server, sizeof(server)) < 0) {
 
 		return -1;
 	}
@@ -70,8 +70,8 @@ bool jbod_connect(const char *ip, uint16_t port) {
 
 /* disconnects from the server and resets cli_sd */
 void jbod_disconnect(void) {
-  close(cli_sd);
-  cli_sd = -1;
+  close(fd);
+  fd = -1;
 }
 
 /* sends the JBOD operation to the server and receives and processes the
@@ -105,7 +105,7 @@ int jbod_client_operation(uint32_t op, uint8_t *block) {
   buf[0] = htons(len) & 0xFF;
   buf[1] = (htons(len) >> 8) & 0xFF;
 
-  if(true != nwrite(cli_sd, len, buf))
+  if(true != nwrite(fd, len, buf))
   {
 	  printf("net write nok\n");
   }
@@ -118,7 +118,7 @@ int jbod_client_operation(uint32_t op, uint8_t *block) {
 
   buf2[0] = htons(len) & 0xFF;
   buf2[1] = (htons(len) >> 8) & 0xFF;
-  if(true != nread(cli_sd, len, buf2))
+  if(true != nread(fd, len, buf2))
   {
 	  printf("net read nok\n");
   }

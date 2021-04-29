@@ -30,7 +30,7 @@ int mdadm_mount(void)
 {
   uint32_t op = encode_operation(JBOD_MOUNT,0,0); 
 
-  if (jbod_client_operation(op,NULL) == 0)
+  if (jbod_client_operation(op,NULL) == 1)
     {return 1;}
   else
     {return -1;}
@@ -41,10 +41,10 @@ int mdadm_unmount(void)
 {
   uint32_t op = encode_operation(JBOD_UNMOUNT,0,0); 
 
-  if (jbod_client_operation(op,NULL) == -1)
-    {return -1;}
-  else
+  if (jbod_client_operation(op,NULL) == 1)
     {return 1;}
+  else
+    {return -1;}
 }
 
 //////////////////////// PART FOR DISK MODIFICATION, READ & WRITE ////////////////////////////////////////////////
