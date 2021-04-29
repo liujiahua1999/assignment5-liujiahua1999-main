@@ -17,37 +17,150 @@ int cli_sd = -1;
 /* attempts to read n bytes from fd; returns true on success and false on
  * failure */
 static bool nread(int fd, int len, uint8_t *buf) {
-  return false;
+int num_read = 0;
+while (num_read < len)
+{
+  int n = read(fd,&buf[num_read], len - num_read);
+  if (n < 0)
+  {
+    return false;
+  }
+  if (n = 0)
+  {
+    return true;
+  }
+  if (n > 0)
+  {
+    num_read += n;
+  } 
+}
 }
 
 /* attempts to write n bytes to fd; returns true on success and false on
  * failure */
 static bool nwrite(int fd, int len, uint8_t *buf) {
-  return false;
+int num_write = 0;
+while (num_write < len)
+{
+  int n = write(fd,&buf[num_write], len - num_write);
+  if (n < 0)
+  {
+    return false;
+  }
+  if (n = 0)
+  {
+    return true;
+  }
+  if (n > 0)
+  {
+    num_write += n;
+  }
+  
+}
 }
 
 /* attempts to receive a packet from fd; returns true on success and false on
  * failure */
 static bool recv_packet(int fd, uint32_t *op, uint16_t *ret, uint8_t *block) {
+  uint16_t len;
+  uint8_t header[HEADER_LEN];
+
+  if (!nread(fd,HEADER_LEN,header))
+  {
+    return false;
+
+  }
+
+
+  int offset = 0;
+  memcpy(&len, header + offset, sizeof(len));
+  offset += sizeof(len);
+  memcpy(op, header + offset, sizeof(*op));
+  offset += sizeof(*op);
+  memcpy(ret, header + offset, sizeof(*ret));
+    len = ntohs(len);
+  *op = ntohl(*op);
+  *ret = ntohs(*ret);
+
+
+return true;
 }
 
 /* attempts to send a packet to sd; returns true on success and false on
  * failure */
 static bool send_packet(int sd, uint32_t op, uint8_t *block) {
+    uint16_t len;
+  uint8_t header[HEADER_LEN];
+
+  if (!nwrite(sd,HEADER_LEN,header))
+  {
+    return false;
+
+  }
+  len = ntohs(len);
+  op = ntohl(op);
+
+  int offset = 0;
+  memcpy(header + offset,&len, sizeof(len));
+  offset += sizeof(len);
+  memcpy(header + offset, op, sizeof(op));
+
+
+  return true;
 }
 
 /* attempts to connect to server and set the global cli_sd variable to the
  * socket; returns true if successful and false if not. */
 bool jbod_connect(const char *ip, uint16_t port) {
   //Create socket
+  
+  cli_sd =socket(PF_INET, SOCK_STREAM, 0);
+  if (cli_sd == -1)
+  {
+    return false;
+  }
+
   //convert ip to binary form
+  struct sockaddr_in caddr;
+  caddr.sin_family = AF_INET;
+  caddr.sin_port = htons(port);
+  if (inet_aton(ip,&caddr.sin_addr) == 0)
+  {
+    return false;
+  }
+
+  
+  //connect
+  if (connect(cli_sd,(const struct sockaddr *)&caddr,sizeof(caddr)) == -1)
+  {
+    return false;
+  }
+  return true;
 }
 
 /* disconnects from the server and resets cli_sd */
 void jbod_disconnect(void) {
+  //close connection
+  close(cli_sd);
+  cli_sd = -1;
+
 }
 
 /* sends the JBOD operation to the server and receives and processes the
  * response. */
+
 int jbod_client_operation(uint32_t op, uint8_t *block) {
+  //loop 
+//op =
+
+   uint8_t ret[2];
+
+    //if packet size does include block (is long)
+   send_packet(cli_sd, op, block);
+
+    //if packet size does include block (is long)
+    recv_packet(cli_sd, op, *ret, block);
+
+    //is this the right way to write the code?
+
 }

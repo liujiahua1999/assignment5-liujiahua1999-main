@@ -34,7 +34,7 @@ typedef enum {
   JBOD_NUM_ERRNOS,
 } jbod_error_t;
 
-int jbod_operation(uint32_t op, uint8_t *block);
+int jbod_client_operation(uint32_t op, uint8_t *block);
 
 extern jbod_error_t jbod_error;
 const char *jbod_error_string(int eno);

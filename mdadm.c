@@ -15,6 +15,7 @@
 #include "mdadm.h"
 #include "util.h"
 #include "tester.h"
+#include "net.h"
 //////////////////////// PART FOR DISK ESSENTIAL, MOUNT & UNMOUNT ////////////////////////////////////////////////
 uint8_t cache_block[JBOD_BLOCK_SIZE];
 //translate jbod operation to bits, which operate harddisk
@@ -29,7 +30,7 @@ int mdadm_mount(void)
 {
   uint32_t op = encode_operation(JBOD_MOUNT,0,0); 
 
-  if (jbod_operation(op,NULL) == 0)
+  if (jbod_client_operation(op,NULL) == 0)
     {return 1;}
   else
     {return -1;}
@@ -40,7 +41,7 @@ int mdadm_unmount(void)
 {
   uint32_t op = encode_operation(JBOD_UNMOUNT,0,0); 
 
-  if (jbod_operation(op,NULL) == -1)
+  if (jbod_client_operation(op,NULL) == -1)
     {return -1;}
   else
     {return 1;}
@@ -52,7 +53,7 @@ int mdadm_unmount(void)
 int mdadm_read(uint32_t addr,  uint32_t len , uint8_t *buf) 
 {
   
-  if(jbod_operation(encode_operation(JBOD_ALREADY_MOUNTED,0,0),NULL) == -1)
+  if(jbod_client_operation(encode_operation(JBOD_ALREADY_MOUNTED,0,0),NULL) == -1)
     {return -1;}
 
   if (addr + len > JBOD_NUM_DISKS * JBOD_DISK_SIZE)
@@ -98,9 +99,9 @@ int mdadm_read(uint32_t addr,  uint32_t len , uint8_t *buf)
 
         if(lookup_cache == -1)
         {
-          jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-          jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
-          jbod_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
+          jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+          jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+          jbod_client_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
           memcpy(buf,&whole_block[offset],len);
           cache_insert(disk_num,block_num,whole_block);
         }    
@@ -124,9 +125,9 @@ int mdadm_read(uint32_t addr,  uint32_t len , uint8_t *buf)
 
         if(lookup_cache == -1)
         {
-          jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-          jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
-          jbod_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
+          jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+          jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+          jbod_client_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
           memcpy(buf,whole_block+offset,JBOD_BLOCK_SIZE-offset);
           cache_insert(disk_num,block_num,whole_block);
         }
@@ -153,9 +154,9 @@ int mdadm_read(uint32_t addr,  uint32_t len , uint8_t *buf)
 
       if(lookup_cache == -1)
       {
-        jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-        jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
-        jbod_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
+        jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+        jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+        jbod_client_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
         memcpy(&buf[Byte_Been_Read],whole_block,JBOD_BLOCK_SIZE);}
 
       if(lookup_cache == 1)
@@ -182,9 +183,9 @@ int mdadm_read(uint32_t addr,  uint32_t len , uint8_t *buf)
         
       if(lookup_cache == -1)
       {
-        jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-        jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
-        jbod_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
+        jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+        jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+        jbod_client_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
         memcpy(&buf[Byte_Been_Read],whole_block,len-Byte_Been_Read);
       }
 
@@ -208,7 +209,7 @@ int mdadm_read(uint32_t addr,  uint32_t len , uint8_t *buf)
 int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf) 
 {
   uint32_t op1 = encode_operation(JBOD_ALREADY_MOUNTED,0,0); 
-  if(jbod_operation(op1,NULL) == -1)
+  if(jbod_client_operation(op1,NULL) == -1)
     {return -1;}
 
   if (addr + len > JBOD_NUM_DISKS * JBOD_DISK_SIZE)
@@ -236,14 +237,14 @@ int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf)
   uint8_t written_block[JBOD_BLOCK_SIZE];
   uint8_t whole_block[JBOD_BLOCK_SIZE];
 
-  jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-  jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
-  jbod_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
+  jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+  jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+  jbod_client_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
 
   memcpy(written_block,whole_block,JBOD_BLOCK_SIZE);
   //seek again because READ is being executed, which move to next block
-  jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-  jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+  jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+  jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
 
 
   if (offset+len < JBOD_BLOCK_SIZE)
@@ -254,14 +255,14 @@ int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf)
     if (lookup_cache == 1)
     {
       memcpy(&written_block[offset],buf,len);
-      jbod_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
+      jbod_client_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
       cache_update(disk_num,block_num,written_block);
     }
 
     if (lookup_cache == -1)
     {
       memcpy(&written_block[offset],buf,len);
-      jbod_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
+      jbod_client_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
       cache_insert(disk_num,block_num,written_block);
     }
 
@@ -274,10 +275,10 @@ int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf)
     uint8_t written_block[JBOD_BLOCK_SIZE];
     uint8_t whole_block[JBOD_BLOCK_SIZE];
 
-    jbod_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
+    jbod_client_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
     memcpy(written_block,whole_block,JBOD_BLOCK_SIZE);
-    jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-    jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+    jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+    jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
 
 
     if (Written_byte+offset < JBOD_BLOCK_SIZE)
@@ -286,13 +287,13 @@ int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf)
       disk_num = curr_addr/JBOD_DISK_SIZE;
       block_num = (curr_addr%JBOD_DISK_SIZE)/JBOD_BLOCK_SIZE;
       offset = (curr_addr % JBOD_DISK_SIZE)%JBOD_BLOCK_SIZE;
-      jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-      jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+      jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+      jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
 
       if (lookup_cache == -1)
       { 
         memcpy(&written_block[offset],buf,JBOD_BLOCK_SIZE-offset);
-        jbod_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
+        jbod_client_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
         cache_insert(disk_num,block_num,written_block);
       }
 
@@ -300,7 +301,7 @@ int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf)
       if (lookup_cache == 1)
       {
         memcpy(&written_block[offset],buf,JBOD_BLOCK_SIZE-offset);
-        jbod_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
+        jbod_client_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
         cache_update(disk_num,block_num,written_block);
       }
 
@@ -320,20 +321,20 @@ int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf)
       block_num = (curr_addr%JBOD_DISK_SIZE)/JBOD_BLOCK_SIZE;
       offset = (curr_addr % JBOD_DISK_SIZE)%JBOD_BLOCK_SIZE;
 
-      jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-      jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+      jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+      jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
 
       if(lookup_cache == -1)
       {
         memcpy(written_block,&buf[Written_byte],JBOD_BLOCK_SIZE);
-        jbod_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
+        jbod_client_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
         cache_insert(disk_num,block_num,whole_block);
       }
 
       if(lookup_cache == 1)
       {
         memcpy(written_block,&buf[Written_byte],JBOD_BLOCK_SIZE);
-        jbod_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
+        jbod_client_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
         cache_update(disk_num,block_num,whole_block);
       }
       curr_addr += JBOD_BLOCK_SIZE;
@@ -349,27 +350,27 @@ int mdadm_write(uint32_t addr, uint32_t len, const uint8_t *buf)
       disk_num = curr_addr/JBOD_DISK_SIZE;
       block_num = (curr_addr%JBOD_DISK_SIZE)/JBOD_BLOCK_SIZE;
       offset = (curr_addr % JBOD_DISK_SIZE)%JBOD_BLOCK_SIZE;
-      jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-      jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+      jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+      jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
 
-      jbod_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
+      jbod_client_operation(encode_operation(JBOD_READ_BLOCK,0,0),whole_block);
       memcpy(written_block,whole_block,JBOD_BLOCK_SIZE);
 
-      jbod_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
-      jbod_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
+      jbod_client_operation(encode_operation(JBOD_SEEK_TO_DISK,disk_num,0),NULL);
+      jbod_client_operation(encode_operation(JBOD_SEEK_TO_BLOCK,0,block_num),NULL);
           
 
       if(lookup_cache == -1)
       {
         memcpy(written_block,&buf[Written_byte],len-Written_byte);
-        jbod_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
+        jbod_client_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
         cache_insert(disk_num,block_num,whole_block);
       }
 
       if(lookup_cache == 1)
       {
         memcpy(written_block,&buf[Written_byte],len-Written_byte);
-        jbod_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
+        jbod_client_operation(encode_operation(JBOD_WRITE_BLOCK,0,0),written_block);
         cache_update(disk_num,block_num,whole_block);
       }
 
