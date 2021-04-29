@@ -64,9 +64,6 @@ len = HEADER_LEN;
 //network order
   header_read[0] = ntohs(len);
   header_read[1] = ntohs(len) >> HEADER_LEN;
-
-
-
   if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
   {
 	  len = HEADER_LEN+JBOD_BLOCK_SIZE;
@@ -75,12 +72,10 @@ len = HEADER_LEN;
   {
 	  return false;
   }
-
   if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
   {
 memcpy(block, &header_read[HEADER_LEN], JBOD_BLOCK_SIZE);
   }
-
 return true;
 }*/
 
@@ -94,8 +89,6 @@ return true;
   uint8_t header_write[HEADER_LEN+JBOD_BLOCK_SIZE];
 header_write[6] = 0;
 header_write[7] = 0;
-
-
   uint8_t OP_BIG_ENDIAN[4];
 //convert uint32_t to unint8_t array
 //network order
@@ -106,9 +99,7 @@ header_write[7] = 0;
 //to avoid segment fault
 //which I find might because type difference
   memcpy(&header_write[2],OP_BIG_ENDIAN,4);
-
   
-
   if(cmd == JBOD_WRITE_BLOCK)
   {
 	 memcpy(&header_write[HEADER_LEN], block, JBOD_BLOCK_SIZE);
@@ -118,20 +109,15 @@ header_write[7] = 0;
   {
      len = HEADER_LEN;
   }
-
 //network order
 //BIG Endian
   header_write[0] = ntohs(len);
   header_write[1] = ntohs(len) >> HEADER_LEN;
-
-
-
   if(!nwrite(sd, len, header_write))
   {
 	  return false;
   }
  
-
 return true;
 }
 */
