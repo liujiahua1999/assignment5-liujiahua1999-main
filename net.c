@@ -164,6 +164,15 @@ bool jbod_connect(const char *ip, uint16_t port) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* uint8_t OP_CONVERT(uint32_t *op_origin)
+{
+uint8_t *OP_BIG_ENDIAN[4];
+  *OP_BIG_ENDIAN[0] = *op_origin >> 24;
+  *OP_BIG_ENDIAN[1] = *op_origin >> 16;
+  *OP_BIG_ENDIAN[2] = *op_origin >> 8;
+  *OP_BIG_ENDIAN[3] = *op_origin;
+  return *OP_BIG_ENDIAN;
+}*/
 /* disconnects from the server and resets cli_sd */
 void jbod_disconnect(void) {
   //close connection
@@ -181,6 +190,11 @@ int cmd = op >> 26;
 uint8_t header_read[HEADER_LEN+JBOD_BLOCK_SIZE];
 uint8_t header_write[HEADER_LEN+JBOD_BLOCK_SIZE];
 uint8_t OP_BIG_ENDIAN[4];
+  OP_BIG_ENDIAN[0] = op >> 24;
+  OP_BIG_ENDIAN[1] = op >> 16;
+  OP_BIG_ENDIAN[2] = op >> 8;
+  OP_BIG_ENDIAN[3] = op;
+
 header_write[6] = 0;
 header_write[7] = 0;  
 
@@ -195,12 +209,10 @@ uint16_t len;
 
 //convert uint32_t to unint8_t array
 //network order
-  OP_BIG_ENDIAN[0] = op >> 24;
-  OP_BIG_ENDIAN[1] = op >> 16;
-  OP_BIG_ENDIAN[2] = op >> 8;
-  OP_BIG_ENDIAN[3] = op;
+
 //to avoid segment fault
 //which I find might because type difference
+
   memcpy(&header_write[2],OP_BIG_ENDIAN,4);
 
   if(cmd == JBOD_WRITE_BLOCK)
