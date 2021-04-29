@@ -32,8 +32,10 @@ while (num_read < len)
   if (n > 0)
   {
     num_read += n;
+
   } 
 }
+return true;
 }
 
 /* attempts to write n bytes to fd; returns true on success and false on
@@ -54,14 +56,17 @@ while (num_write < len)
   if (n > 0)
   {
     num_write += n;
+
   }
   
 }
+return true;
 }
 
 /* attempts to receive a packet from fd; returns true on success and false on
  * failure */
 static bool recv_packet(int fd, uint32_t *op, uint16_t *ret, uint8_t *block) {
+  
   uint16_t len;
   uint8_t header[HEADER_LEN];
 
@@ -89,14 +94,13 @@ return true;
 /* attempts to send a packet to sd; returns true on success and false on
  * failure */
 static bool send_packet(int sd, uint32_t op, uint8_t *block) {
-    uint16_t len;
+  uint32_t cmd = op >> 26;
+  if(cmd == JBOD_WRITE_BLOCK)
+  {
+        uint16_t len = 8;
   uint8_t header[HEADER_LEN];
 
-  if (!nwrite(sd,HEADER_LEN,header))
-  {
-    return false;
 
-  }
   len = ntohs(len);
   op = ntohl(op);
 
@@ -105,8 +109,38 @@ static bool send_packet(int sd, uint32_t op, uint8_t *block) {
   offset += sizeof(len);
   memcpy(header + offset, op, sizeof(op));
 
+  if (!nwrite(sd,HEADER_LEN,header))
+  {
+    return false;
+
+  }
 
   return true;
+  }
+  
+  if(cmd == JBOD_READ_BLOCK)
+  {
+        uint16_t len = 264;
+  uint8_t header[HEADER_LEN];
+
+
+  len = ntohs(len);
+  op = ntohl(op);
+
+  int offset = 0;
+  memcpy(header + offset,&len, sizeof(len));
+  offset += sizeof(len);
+  memcpy(header + offset, op, sizeof(op));
+  offset += sizeof(op);
+  memcpy(header + offset, *block, sizeof(*block));
+  if (!nwrite(sd,HEADER_LEN,header))
+  {
+    return false;
+
+  }
+  return true;
+  }
+return true;
 }
 
 /* attempts to connect to server and set the global cli_sd variable to the
@@ -138,6 +172,7 @@ bool jbod_connect(const char *ip, uint16_t port) {
   return true;
 }
 
+
 /* disconnects from the server and resets cli_sd */
 void jbod_disconnect(void) {
   //close connection
@@ -152,14 +187,53 @@ void jbod_disconnect(void) {
 int jbod_client_operation(uint32_t op, uint8_t *block) {
   //loop 
 //op =
+  uint32_t cmd = op >> 26;
+  if(cmd == JBOD_READ_BLOCK)
+  {
+  uint16_t len = 264;
+  uint8_t header[HEADER_LEN];
 
-   uint8_t ret[2];
+
+  len = ntohs(len);
+  op = ntohl(op);
+
+  int offset = 0;
+  memcpy(header + offset,&len, sizeof(len));
+  offset += sizeof(len);
+  memcpy(header + offset, op, sizeof(op));
+  offset += sizeof(op);
+  memcpy(header + offset, block, sizeof(block));
+    if (!nwrite(cli_sd,HEADER_LEN,header))
+    {
+      return false;
+    }
+  return true;
+  }
+
+  else
+  {
+  uint16_t len = 8;
+  uint8_t header[HEADER_LEN];
+
+
+  len = ntohs(len);
+  op = ntohl(op);
+
+  
+  memcpy(header,len, 2);
+  
+  memcpy(header + 2, op, 4);
+
+  if (!nwrite(cli_sd,HEADER_LEN,header))
+  {return false;}
+
+  return true;
+  }
+  
+
+return true;
 
     //if packet size does include block (is long)
-   send_packet(cli_sd, op, block);
-
-    //if packet size does include block (is long)
-    recv_packet(cli_sd, op, *ret, block);
 
     //is this the right way to write the code?
 
