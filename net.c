@@ -64,9 +64,6 @@ len = HEADER_LEN;
 //network order
   header_read[0] = ntohs(len);
   header_read[1] = ntohs(len) >> HEADER_LEN;
-
-
-
   if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
   {
 	  len = HEADER_LEN+JBOD_BLOCK_SIZE;
@@ -75,12 +72,10 @@ len = HEADER_LEN;
   {
 	  return false;
   }
-
   if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
   {
 memcpy(block, &header_read[HEADER_LEN], JBOD_BLOCK_SIZE);
   }
-
 return true;
 }*/
 
@@ -88,53 +83,63 @@ return true;
  * failure */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*static bool send_packet(int sd, uint32_t op, uint8_t *block) {
-  int cmd = op >> 26;
-  uint16_t len;
-  uint8_t header_write[HEADER_LEN+JBOD_BLOCK_SIZE];
-header_write[6] = 0;
-header_write[7] = 0;
+static bool send_packet(int sd, uint32_t op, uint8_t *block) {
+int cmd = op >> 26;
 
-
-  uint8_t OP_BIG_ENDIAN[4];
-//convert uint32_t to unint8_t array
-//network order
+uint8_t header_write[HEADER_LEN+JBOD_BLOCK_SIZE];
+uint8_t OP_BIG_ENDIAN[4];
   OP_BIG_ENDIAN[0] = op >> 24;
   OP_BIG_ENDIAN[1] = op >> 16;
   OP_BIG_ENDIAN[2] = op >> 8;
   OP_BIG_ENDIAN[3] = op;
+
+header_write[6] = 0;
+header_write[7] = 0;  
+
+//uint16_t len_short;
+//uint16_t len_long;
+uint16_t len;
+
+
+//bool a = send_packet(cli_sd,op,*block);
+//bool b = recv_packet(cli_sd,op,*block);
+//return a && b;
+
+//convert uint32_t to unint8_t array
+//network order
+
 //to avoid segment fault
 //which I find might because type difference
-  memcpy(&header_write[2],OP_BIG_ENDIAN,4);
 
-  
+  memcpy(&header_write[2],OP_BIG_ENDIAN,4);
 
   if(cmd == JBOD_WRITE_BLOCK)
   {
 	 memcpy(&header_write[HEADER_LEN], block, JBOD_BLOCK_SIZE);
-	 len = HEADER_LEN+JBOD_BLOCK_SIZE;
+	len = HEADER_LEN+JBOD_BLOCK_SIZE;
+  header_write[0] = ntohs(len);
+  header_write[1] = ntohs(len) >> HEADER_LEN;
   }
   else
   {
-     len = HEADER_LEN;
+  len = HEADER_LEN;
+
+  header_write[0] = ntohs(len);
+  header_write[1] = ntohs(len) >> HEADER_LEN;
   }
+
 
 //network order
 //BIG Endian
-  header_write[0] = ntohs(len);
-  header_write[1] = ntohs(len) >> HEADER_LEN;
 
 
-
-  if(!nwrite(sd, len, header_write))
+  if(!nwrite(cli_sd , len, header_write))
   {
 	  return false;
   }
- 
-
-return true;
+  return true;
 }
-*/
+
 /* attempts to connect to server and set the global cli_sd variable to the
  * socket; returns true if successful and false if not. */
 bool jbod_connect(const char *ip, uint16_t port) {
@@ -164,6 +169,15 @@ bool jbod_connect(const char *ip, uint16_t port) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* uint8_t OP_CONVERT(uint32_t *op_origin)
+{
+uint8_t *OP_BIG_ENDIAN[4];
+  *OP_BIG_ENDIAN[0] = *op_origin >> 24;
+  *OP_BIG_ENDIAN[1] = *op_origin >> 16;
+  *OP_BIG_ENDIAN[2] = *op_origin >> 8;
+  *OP_BIG_ENDIAN[3] = *op_origin;
+  return *OP_BIG_ENDIAN;
+}*/
 /* disconnects from the server and resets cli_sd */
 void jbod_disconnect(void) {
   //close connection
@@ -179,54 +193,14 @@ int jbod_client_operation(uint32_t op, uint8_t *block) {
 ////////// I FIND USING HELPER FUNCTION REALLY HARD TO DEAL WITH (I HATE POINTER), AND I COMBINE SEND AND RECV TO PUT THEM TOGETHER HERE///////////////////////
 int cmd = op >> 26;
 uint8_t header_read[HEADER_LEN+JBOD_BLOCK_SIZE];
-uint8_t header_write[HEADER_LEN+JBOD_BLOCK_SIZE];
-uint8_t OP_BIG_ENDIAN[4];
-header_write[6] = 0;
-header_write[7] = 0;  
 
-//uint16_t len_short;
-//uint16_t len_long;
+
 uint16_t len;
 
 
-//bool a = send_packet(cli_sd,op,*block);
-//bool b = recv_packet(cli_sd,op,*block);
-//return a && b;
-
-//convert uint32_t to unint8_t array
-//network order
-  OP_BIG_ENDIAN[0] = op >> 24;
-  OP_BIG_ENDIAN[1] = op >> 16;
-  OP_BIG_ENDIAN[2] = op >> 8;
-  OP_BIG_ENDIAN[3] = op;
-//to avoid segment fault
-//which I find might because type difference
-  memcpy(&header_write[2],OP_BIG_ENDIAN,4);
-
-  if(cmd == JBOD_WRITE_BLOCK)
-  {
-	 memcpy(&header_write[HEADER_LEN], block, JBOD_BLOCK_SIZE);
-	len = HEADER_LEN+JBOD_BLOCK_SIZE;
-  header_write[0] = ntohs(len);
-  header_write[1] = ntohs(len) >> HEADER_LEN;
-  }
-  else
-  {
-  len = HEADER_LEN;
-
-  header_write[0] = ntohs(len);
-  header_write[1] = ntohs(len) >> HEADER_LEN;
-  }
 
 
-//network order
-//BIG Endian
-
-
-  if(!nwrite(cli_sd , len, header_write))
-  {
-	  return -1;
-  }
+ send_packet(cli_sd,op,block);
   
 ////////////////////////////////////////////////////RECIEVE DOWN HERE/////////////////////////////////////////////////////////////////////////////////////
 
