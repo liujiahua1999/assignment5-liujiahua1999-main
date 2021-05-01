@@ -128,30 +128,20 @@ bool jbod_connect(const char *ip, uint16_t port) {
   }
   return true;
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* uint8_t OP_CONVERT(uint32_t *op_origin)
-{
-uint8_t *OP_BIG_ENDIAN[4];
-  *OP_BIG_ENDIAN[0] = *op_origin >> 24;
-  *OP_BIG_ENDIAN[1] = *op_origin >> 16;
-  *OP_BIG_ENDIAN[2] = *op_origin >> 8;
-  *OP_BIG_ENDIAN[3] = *op_origin;
-  return *OP_BIG_ENDIAN;
-}*/
-/* disconnects from the server and resets cli_sd */
+
 void jbod_disconnect(void) {
   //close connection
   close(cli_sd);
   cli_sd = -1;
 
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /* sends the JBOD operation to the server and receives and processes the
  * response. */
 
 int jbod_client_operation(uint32_t op, uint8_t *block) {
-////////// I FIND USING HELPER FUNCTION REALLY HARD TO DEAL WITH (I HATE POINTER), AND I COMBINE SEND AND RECV TO PUT THEM TOGETHER HERE///////////////////////
+
 int cmd = op >> 26;
 uint8_t header_read[HEADER_LEN+JBOD_BLOCK_SIZE];
 
@@ -159,7 +149,6 @@ uint16_t len;
 
  send_packet(cli_sd,op,block);
   
-////////////////////////////////////////////////////RECIEVE DOWN HERE/////////////////////////////////////////////////////////////////////////////////////
 
 
   if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
