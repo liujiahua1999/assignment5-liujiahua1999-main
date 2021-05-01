@@ -101,12 +101,25 @@ uint16_t len;
   }
   return true;
 }
-static bool recv_packet(int fd, uint32_t op, uint16_t *ret, uint8_t *block)
+static bool recv_packet(int fd, uint32_t *op, uint16_t *ret, uint8_t *block)
 {
 uint16_t len;
 uint8_t header[JBOD_BLOCK_SIZE + HEADER_LEN];
   if(!nread(fd,len = JBOD_BLOCK_SIZE + HEADER_LEN, header))
   {return false;}
+  memcpy;
+  memcpy;
+  memcpy;
+  len = ntohs(len);
+  *op = ntohl(*op);
+  *ret = ntohs(*ret);
+
+  if(len > HEADER_LEN)
+  {
+    memcpy(block, header + HEADER_LEN, JBOD_BLOCK_SIZE);
+    return true;
+  }
+  return true;
 }
 /* attempts to connect to server and set the global cli_sd variable to the
  * socket; returns true if successful and false if not. */
