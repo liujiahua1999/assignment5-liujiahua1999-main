@@ -166,33 +166,14 @@ int cmd = op >> 26;
 uint8_t header_read[HEADER_LEN+JBOD_BLOCK_SIZE];
 
 uint16_t len;
-
+uint16_t ret;
+uint32_t op_recv;
  if(!send_packet(cli_sd,op,block))
  {return -1;}
-  
 
+ if(!recv_packet(cli_sd,ret,op_recv,block))
+ {return -1;}
 
-  if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
-  {
-	  len = HEADER_LEN+JBOD_BLOCK_SIZE;
-  header_read[0] = ntohs(len);
-  header_read[1] = ntohs(len) >> HEADER_LEN;//network order
-  }
-  else
-  {
-    len = HEADER_LEN;
-  header_read[0] = ntohs(len);
-  header_read[1] = ntohs(len) >> HEADER_LEN;
-  }
-  if(!nread(cli_sd , len, header_read))
-  {
-	  return -1;
-  }
-
-  if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
-  {
-memcpy(block, &header_read[HEADER_LEN], JBOD_BLOCK_SIZE);
-  }
 
 /* attempts to send a packet to sd; returns true on success and false on
  * failure */
