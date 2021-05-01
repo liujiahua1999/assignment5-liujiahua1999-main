@@ -31,6 +31,7 @@ while (num_read < len)
     return true;
   } 
 }
+return false;
 }
 
 /* attempts to write n bytes to fd; returns true on success and false on
@@ -51,7 +52,7 @@ while (num_write < len)
   }
   
 }
-return true;
+return false;
 }
 
 static bool send_packet(int sd, uint32_t op, uint8_t *block) {
@@ -147,7 +148,8 @@ uint8_t header_read[HEADER_LEN+JBOD_BLOCK_SIZE];
 
 uint16_t len;
 
- send_packet(cli_sd,op,block);
+ if(!send_packet(cli_sd,op,block))
+ {return -1;}
   
 
 
