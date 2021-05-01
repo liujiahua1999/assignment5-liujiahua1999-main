@@ -53,36 +53,7 @@ while (num_write < len)
 }
 return true;
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*static bool recv_packet(int fd, uint32_t *op, uint8_t *block) {
-uint8_t header_read[HEADER_LEN+JBOD_BLOCK_SIZE];
-int cmd = *op >> 26;
-uint16_t len;
-  
-len = HEADER_LEN;
-  
-//network order
-  header_read[0] = ntohs(len);
-  header_read[1] = ntohs(len) >> HEADER_LEN;
-  if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
-  {
-	  len = HEADER_LEN+JBOD_BLOCK_SIZE;
-  }
-  if(!nread(fd, len, header_read))
-  {
-	  return false;
-  }
-  if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
-  {
-memcpy(block, &header_read[HEADER_LEN], JBOD_BLOCK_SIZE);
-  }
-return true;
-}*/
 
-/* attempts to send a packet to sd; returns true on success and false on
- * failure */
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 static bool send_packet(int sd, uint32_t op, uint8_t *block) {
 int cmd = op >> 26;
 
@@ -100,16 +71,6 @@ header_write[7] = 0;
 //uint16_t len_long;
 uint16_t len;
 
-
-//bool a = send_packet(cli_sd,op,*block);
-//bool b = recv_packet(cli_sd,op,*block);
-//return a && b;
-
-//convert uint32_t to unint8_t array
-//network order
-
-//to avoid segment fault
-//which I find might because type difference
 
   memcpy(&header_write[2],OP_BIG_ENDIAN,4);
 
@@ -169,6 +130,15 @@ bool jbod_connect(const char *ip, uint16_t port) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* uint8_t OP_CONVERT(uint32_t *op_origin)
+{
+uint8_t *OP_BIG_ENDIAN[4];
+  *OP_BIG_ENDIAN[0] = *op_origin >> 24;
+  *OP_BIG_ENDIAN[1] = *op_origin >> 16;
+  *OP_BIG_ENDIAN[2] = *op_origin >> 8;
+  *OP_BIG_ENDIAN[3] = *op_origin;
+  return *OP_BIG_ENDIAN;
+}*/
 /* disconnects from the server and resets cli_sd */
 void jbod_disconnect(void) {
   //close connection
