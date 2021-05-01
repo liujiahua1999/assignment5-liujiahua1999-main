@@ -169,15 +169,6 @@ bool jbod_connect(const char *ip, uint16_t port) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* uint8_t OP_CONVERT(uint32_t *op_origin)
-{
-uint8_t *OP_BIG_ENDIAN[4];
-  *OP_BIG_ENDIAN[0] = *op_origin >> 24;
-  *OP_BIG_ENDIAN[1] = *op_origin >> 16;
-  *OP_BIG_ENDIAN[2] = *op_origin >> 8;
-  *OP_BIG_ENDIAN[3] = *op_origin;
-  return *OP_BIG_ENDIAN;
-}*/
 /* disconnects from the server and resets cli_sd */
 void jbod_disconnect(void) {
   //close connection
@@ -194,24 +185,18 @@ int jbod_client_operation(uint32_t op, uint8_t *block) {
 int cmd = op >> 26;
 uint8_t header_read[HEADER_LEN+JBOD_BLOCK_SIZE];
 
-
 uint16_t len;
-
-
-
 
  send_packet(cli_sd,op,block);
   
 ////////////////////////////////////////////////////RECIEVE DOWN HERE/////////////////////////////////////////////////////////////////////////////////////
-
-//network order
 
 
   if(cmd == JBOD_READ_BLOCK || cmd == JBOD_SIGN_BLOCK)
   {
 	  len = HEADER_LEN+JBOD_BLOCK_SIZE;
   header_read[0] = ntohs(len);
-  header_read[1] = ntohs(len) >> HEADER_LEN;
+  header_read[1] = ntohs(len) >> HEADER_LEN;//network order
   }
   else
   {
