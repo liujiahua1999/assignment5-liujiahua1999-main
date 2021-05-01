@@ -107,9 +107,9 @@ uint16_t len;
 uint8_t header[JBOD_BLOCK_SIZE + HEADER_LEN];
   if(!nread(fd,len = JBOD_BLOCK_SIZE + HEADER_LEN, header))
   {return false;}
-  memcpy;
-  memcpy;
-  memcpy;
+  memcpy(&len,&header,2);
+  memcpy(op,header+2,4);
+  memcpy(ret,header+6,2);
   len = ntohs(len);
   *op = ntohl(*op);
   *ret = ntohs(*ret);
@@ -162,16 +162,14 @@ void jbod_disconnect(void) {
 
 int jbod_client_operation(uint32_t op, uint8_t *block) {
 
-int cmd = op >> 26;
-uint8_t header_read[HEADER_LEN+JBOD_BLOCK_SIZE];
 
-uint16_t len;
+
 uint16_t ret;
 uint32_t op_recv;
  if(!send_packet(cli_sd,op,block))
  {return -1;}
 
- if(!recv_packet(cli_sd,ret,op_recv,block))
+ if(!recv_packet(cli_sd,&ret,&op_recv,block))
  {return -1;}
 
 
