@@ -101,7 +101,13 @@ uint16_t len;
   }
   return true;
 }
-
+static bool recv_packet(int fd, uint32_t op, uint16_t *ret, uint8_t *block)
+{
+uint16_t len;
+uint8_t header[JBOD_BLOCK_SIZE + HEADER_LEN];
+  if(!nread(fd,len = JBOD_BLOCK_SIZE + HEADER_LEN, header))
+  {return false;}
+}
 /* attempts to connect to server and set the global cli_sd variable to the
  * socket; returns true if successful and false if not. */
 bool jbod_connect(const char *ip, uint16_t port) {
